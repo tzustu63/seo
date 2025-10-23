@@ -54,19 +54,58 @@ class GoogleSearchAutomation:
         self.page_delay = config.get('page_delay', (20, 30))
         
     def start_browser(self) -> None:
-        """Initialize and start Chrome browser."""
+        """Initialize and start Chrome browser with anti-detection features."""
         try:
             chrome_options = webdriver.ChromeOptions()
+            
+            # 基本設定
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
             chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+            
+            # 反自動化檢測
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
             
+            # 模擬真實瀏覽器
+            chrome_options.add_argument('--disable-infobars')
+            chrome_options.add_argument('--start-maximized')
+            chrome_options.add_argument('--disable-notifications')
+            
+            # 設定真實的 User-Agent
+            user_agents = [
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+            ]
+            chrome_options.add_argument(f'user-agent={random.choice(user_agents)}')
+            
+            # 設定語言
+            chrome_options.add_argument('--lang=zh-TW')
+            
+            # 初始化瀏覽器
             self.driver = webdriver.Chrome(options=chrome_options)
+            
+            # 執行反檢測腳本
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
-            self.logger.info("Browser started successfully")
+            # 設定更多反檢測屬性
+            self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+                "userAgent": self.driver.execute_script("return navigator.userAgent").replace('HeadlessChrome', 'Chrome')
+            })
+            
+            # 移除 webdriver 痕跡
+            self.driver.execute_script("""
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5]
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['zh-TW', 'zh', 'en-US', 'en']
+                });
+            """)
+            
+            self.logger.info("Browser started successfully with anti-detection features")
             
         except Exception as e:
             self.logger.error(f"Failed to start browser: {e}")
@@ -85,7 +124,7 @@ class GoogleSearchAutomation:
     
     def search_keyword(self, keyword: str) -> bool:
         """
-        Execute Google search for a specific keyword.
+        Execute Google search for a specific keyword with human-like behavior.
         
         Args:
             keyword: Search keyword
@@ -99,19 +138,39 @@ class GoogleSearchAutomation:
             # Navigate to Google
             self.driver.get("https://www.google.com.tw")
             
-            # Wait for search box and enter keyword
+            # 隨機短暫延遲（模擬頁面加載後的思考時間）
+            time.sleep(random.uniform(0.5, 1.5))
+            
+            # Wait for search box
             search_box = WebDriverWait(self.driver, self.wait_timeout).until(
                 EC.presence_of_element_located((By.NAME, "q"))
             )
             
+            # 模擬人類滑鼠移動到搜尋框
+            time.sleep(random.uniform(0.3, 0.8))
+            
+            # 清空搜尋框
             search_box.clear()
-            search_box.send_keys(keyword)
+            
+            # 模擬人類打字（逐字輸入，而非一次性貼上）
+            for char in keyword:
+                search_box.send_keys(char)
+                # 每個字元間隔隨機延遲（模擬打字速度）
+                time.sleep(random.uniform(0.05, 0.15))
+            
+            # 輸入完成後的短暫停頓（模擬思考）
+            time.sleep(random.uniform(0.3, 0.8))
+            
+            # 提交搜尋
             search_box.submit()
             
             # Wait for search results
             WebDriverWait(self.driver, self.wait_timeout).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
+            
+            # 模擬查看搜尋結果的時間
+            time.sleep(random.uniform(1.0, 2.5))
             
             self.logger.info(f"Search completed for keyword: {keyword}")
             return True
@@ -125,7 +184,7 @@ class GoogleSearchAutomation:
     
     def find_and_click_target_url(self, target_url: str) -> Tuple[bool, int]:
         """
-        Find and click target URL in search results.
+        Find and click target URL in search results with human-like behavior.
         
         Args:
             target_url: Target URL to find and click
@@ -142,6 +201,17 @@ class GoogleSearchAutomation:
                     EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
                 
+                # 模擬人類瀏覽行為：隨機滾動頁面查看結果
+                scroll_amount = random.randint(200, 500)
+                self.driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                time.sleep(random.uniform(0.5, 1.5))
+                
+                # 有時候會向上滾動一點（模擬重新查看）
+                if random.random() < 0.3:
+                    scroll_back = random.randint(50, 150)
+                    self.driver.execute_script(f"window.scrollBy(0, -{scroll_back});")
+                    time.sleep(random.uniform(0.3, 0.8))
+                
                 # Get all links on the page
                 links = self.driver.find_elements(By.TAG_NAME, "a")
                 
@@ -150,9 +220,20 @@ class GoogleSearchAutomation:
                     try:
                         href = link.get_attribute("href")
                         if href and self.url_manager.match_url(href, target_url):
+                            # 模擬滾動到目標連結位置
+                            self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", link)
+                            time.sleep(random.uniform(0.5, 1.2))
+                            
+                            # 模擬滑鼠懸停（查看連結）
+                            time.sleep(random.uniform(0.3, 0.8))
+                            
                             # Click the matching link
                             link.click()
                             self.logger.info(f"Successfully clicked target URL on page {page + 1}: {href}")
+                            
+                            # 等待新頁面加載
+                            time.sleep(random.uniform(1.0, 2.0))
+                            
                             return True, page + 1
                     except Exception as e:
                         self.logger.debug(f"Error checking link: {e}")
@@ -161,8 +242,20 @@ class GoogleSearchAutomation:
                 # Try to go to next page if not found
                 if page < self.max_pages - 1:
                     try:
+                        # 滾動到頁面底部（尋找下一頁按鈕）
+                        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                        time.sleep(random.uniform(0.5, 1.0))
+                        
                         next_button = self.driver.find_element(By.LINK_TEXT, "下一頁")
+                        
+                        # 滾動到下一頁按鈕
+                        self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", next_button)
+                        time.sleep(random.uniform(0.5, 1.0))
+                        
+                        # 點擊下一頁
                         next_button.click()
+                        
+                        # 等待頁面加載
                         self._random_delay()
                     except NoSuchElementException:
                         self.logger.warning(f"No 'next page' button found on page {page + 1}")
@@ -208,6 +301,9 @@ class GoogleSearchAutomation:
             result['page_found'] = page_found
             
             if success:
+                # 模擬在目標頁面上的真實瀏覽行為
+                self._simulate_page_browsing()
+                
                 # Wait on target page
                 self._random_delay(self.page_delay[0], self.page_delay[1])
                 
@@ -297,6 +393,48 @@ class GoogleSearchAutomation:
             self.close_browser()
             
         return results
+    
+    def _simulate_page_browsing(self) -> None:
+        """
+        模擬真實的頁面瀏覽行為，避免被偵測為機器人。
+        """
+        try:
+            # 模擬閱讀頁面：隨機滾動
+            num_scrolls = random.randint(2, 5)
+            
+            for _ in range(num_scrolls):
+                # 隨機向下滾動
+                scroll_amount = random.randint(300, 700)
+                self.driver.execute_script(f"window.scrollBy({{top: {scroll_amount}, behavior: 'smooth'}});")
+                
+                # 停留一段時間（模擬閱讀）
+                time.sleep(random.uniform(1.5, 3.5))
+                
+                # 有時候會向上滾動（模擬重新閱讀某段內容）
+                if random.random() < 0.4:
+                    scroll_back = random.randint(100, 300)
+                    self.driver.execute_script(f"window.scrollBy({{top: -{scroll_back}, behavior: 'smooth'}});")
+                    time.sleep(random.uniform(0.8, 1.5))
+            
+            # 模擬滾動到頁面頂部或底部
+            if random.random() < 0.5:
+                # 滾動到底部
+                self.driver.execute_script("window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});")
+                time.sleep(random.uniform(1.0, 2.0))
+            else:
+                # 滾動到頂部
+                self.driver.execute_script("window.scrollTo({top: 0, behavior: 'smooth'});")
+                time.sleep(random.uniform(1.0, 2.0))
+            
+            # 隨機在中間位置停留
+            middle_position = random.randint(200, 800)
+            self.driver.execute_script(f"window.scrollTo({{top: {middle_position}, behavior: 'smooth'}});")
+            time.sleep(random.uniform(1.0, 2.5))
+            
+            self.logger.debug("Page browsing simulation completed")
+            
+        except Exception as e:
+            self.logger.warning(f"Error during page browsing simulation: {e}")
     
     def _random_delay(self, min_delay: Optional[float] = None, max_delay: Optional[float] = None) -> None:
         """

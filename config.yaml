@@ -7,18 +7,16 @@ general:
   max_pages: 10
 
   # 等待超時時間（秒）
-  wait_timeout: 10
+  wait_timeout: 15
 
-  # 最小延遲時間（秒）
-  min_delay: 2
+  # 任務間延遲時間（秒）- 模擬真人使用間隔
+  min_delay: 3
+  max_delay: 8
 
-  # 最大延遲時間（秒）
-  max_delay: 5
-
-  # 頁面停留時間範圍（秒）
+  # 目標頁面停留時間範圍（秒）- 模擬真人閱讀時間
   page_delay:
-    min: 20
-    max: 30
+    min: 30
+    max: 60
 
   # 重試次數
   retry_attempts: 3
@@ -32,8 +30,8 @@ general:
     total_iterations: 500 # 總執行次數
     random_keyword_selection: true # 隨機選擇關鍵字
     random_url_selection: true # 隨機選擇目標網址
-    min_delay_between_iterations: 5 # 每次執行間最小延遲（秒）
-    max_delay_between_iterations: 15 # 每次執行間最大延遲（秒）
+    min_delay_between_iterations: 10 # 每次執行間最小延遲（秒）- 增加以避免被偵測
+    max_delay_between_iterations: 30 # 每次執行間最大延遲（秒）- 模擬真人使用間隔
 
 # 搜尋關鍵字設定
 keywords:
@@ -45,7 +43,7 @@ keywords:
       max_pages: 10
       search_modifiers: []
 
-    - keyword: "花蓮 廠房"
+    - keyword: "花蓮鋼構"
       enabled: true
       priority: 1
       max_pages: 10
@@ -63,7 +61,7 @@ keywords:
       max_pages: 15
       search_modifiers: []
 
-    - keyword: "花蓮 頂樓加蓋"
+    - keyword: "花蓮鐵皮屋"
       enabled: true
       priority: 3
       max_pages: 20
@@ -71,12 +69,6 @@ keywords:
 
   # 關鍵字組合
   combinations:
-    - keyword: "太陽能鋼構 永康鋼構"
-      enabled: true
-      priority: 1
-      max_pages: 10
-      search_modifiers: []
-
     - keyword: "花蓮 鋼構"
       enabled: true
       priority: 2
