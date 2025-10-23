@@ -46,20 +46,44 @@ def main():
         stats = automation.get_search_statistics()
         logger.info(f"Session statistics: {stats}")
         
+        # Check if random execution was used
+        random_config = config.get('general', {}).get('random_execution', {})
+        is_random_mode = random_config.get('enabled', False)
+        
         # Print summary
         print("\n" + "="*50)
-        print("GOOGLE SEARCH AUTOMATION SUMMARY")
+        if is_random_mode:
+            print("GOOGLE SEARCH AUTOMATION SUMMARY (RANDOM MODE)")
+        else:
+            print("GOOGLE SEARCH AUTOMATION SUMMARY")
         print("="*50)
         print(f"Total searches: {total_searches}")
         print(f"Successful searches: {successful_searches}")
         print(f"Success rate: {successful_searches/total_searches*100:.1f}%" if total_searches > 0 else "N/A")
         
-        if results:
+        # Show random execution statistics if applicable
+        if is_random_mode and total_searches > 0:
+            random_stats = automation.search_analyzer.get_random_execution_stats()
+            print(f"\nRandom Execution Statistics:")
+            print(f"  Unique keywords used: {random_stats.get('unique_keywords_used', 0)}")
+            print(f"  Unique URLs used: {random_stats.get('unique_urls_used', 0)}")
+            
+            if random_stats.get('most_used_keyword'):
+                keyword, count = random_stats['most_used_keyword']
+                print(f"  Most used keyword: '{keyword}' ({count} times)")
+            
+            if random_stats.get('most_clicked_url'):
+                url, count = random_stats['most_clicked_url']
+                print(f"  Most clicked URL: '{url}' ({count} times)")
+        
+        if results and len(results) <= 20:  # Only show detailed results if not too many
             print("\nDetailed Results:")
             for i, result in enumerate(results, 1):
                 status = "✓" if result['success'] else "✗"
                 page_info = f" (page {result['page_found']})" if result['success'] and result['page_found'] > 0 else ""
                 print(f"  {i}. {status} {result['keyword']} -> {result['target_url']}{page_info}")
+        elif results:
+            print(f"\nNote: {len(results)} results completed (detailed list omitted for brevity)")
         
         print("="*50)
         

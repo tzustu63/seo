@@ -381,6 +381,37 @@ class SearchAnalyzer:
         else:
             raise ValueError(f"Unsupported export format: {format}")
     
+    def get_random_execution_stats(self) -> Dict:
+        """
+        Get statistics for random execution mode.
+        
+        Returns:
+            Dict: Random execution statistics
+        """
+        if not self.search_results:
+            return {}
+        
+        # 統計每個關鍵字被選中的次數
+        keyword_counts = {}
+        url_counts = {}
+        
+        for result in self.search_results:
+            keyword = result.keyword
+            url = result.target_url
+            
+            keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
+            url_counts[url] = url_counts.get(url, 0) + 1
+        
+        return {
+            'total_executions': len(self.search_results),
+            'keyword_distribution': keyword_counts,
+            'url_distribution': url_counts,
+            'most_used_keyword': max(keyword_counts.items(), key=lambda x: x[1]) if keyword_counts else None,
+            'most_clicked_url': max(url_counts.items(), key=lambda x: x[1]) if url_counts else None,
+            'unique_keywords_used': len(keyword_counts),
+            'unique_urls_used': len(url_counts)
+        }
+    
     def clear_data(self) -> None:
         """Clear all stored data."""
         self.search_results.clear()

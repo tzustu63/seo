@@ -227,11 +227,13 @@ class GoogleSearchAutomation:
     
     def run_automation_cycle(self) -> List[Dict]:
         """
-        Run complete automation cycle for all configured keywords and URLs.
+        Run complete automation cycle with optional random keyword selection.
         
         Returns:
             List[Dict]: Results for all search tasks
         """
+        import random
+        
         results = []
         
         try:
@@ -240,16 +242,54 @@ class GoogleSearchAutomation:
             keywords = self.keyword_manager.get_all_keywords()
             target_urls = self.url_manager.get_all_urls()
             
-            for keyword in keywords:
-                for target_url in target_urls:
-                    self.logger.info(f"Executing task: {keyword} -> {target_url}")
+            # 檢查是否啟用隨機執行
+            random_config = self.config.get('general', {}).get('random_execution', {})
+            if random_config.get('enabled', False):
+                total_iterations = random_config.get('total_iterations', 500)
+                random_keyword = random_config.get('random_keyword_selection', True)
+                random_url = random_config.get('random_url_selection', True)
+                min_delay = random_config.get('min_delay_between_iterations', 5)
+                max_delay = random_config.get('max_delay_between_iterations', 15)
+                
+                self.logger.info(f"Starting random execution: {total_iterations} iterations")
+                
+                for i in range(total_iterations):
+                    # 隨機選擇關鍵字
+                    if random_keyword and keywords:
+                        keyword = random.choice(keywords)
+                    else:
+                        keyword = keywords[i % len(keywords)] if keywords else None
                     
-                    result = self.execute_search_task(keyword, target_url)
-                    results.append(result)
+                    # 隨機選擇目標網址
+                    if random_url and target_urls:
+                        target_url = random.choice(target_urls)
+                    else:
+                        target_url = target_urls[i % len(target_urls)] if target_urls else None
                     
-                    # Random delay between tasks
-                    self._random_delay()
-                    
+                    if keyword and target_url:
+                        self.logger.info(f"Executing task {i+1}/{total_iterations}: {keyword} -> {target_url}")
+                        
+                        result = self.execute_search_task(keyword, target_url)
+                        results.append(result)
+                        
+                        # 隨機延遲
+                        if i < total_iterations - 1:  # 最後一次不需要延遲
+                            delay = random.uniform(min_delay, max_delay)
+                            self.logger.info(f"Waiting {delay:.1f} seconds before next iteration...")
+                            time.sleep(delay)
+            else:
+                # 原有的順序執行邏輯
+                self.logger.info("Running sequential execution mode")
+                for keyword in keywords:
+                    for target_url in target_urls:
+                        self.logger.info(f"Executing task: {keyword} -> {target_url}")
+                        
+                        result = self.execute_search_task(keyword, target_url)
+                        results.append(result)
+                        
+                        # Random delay between tasks
+                        self._random_delay()
+                        
         except Exception as e:
             self.logger.error(f"Error in automation cycle: {e}")
             

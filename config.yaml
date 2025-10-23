@@ -26,6 +26,15 @@ general:
   # 並發控制
   max_concurrent_searches: 1
 
+  # 隨機執行設定
+  random_execution:
+    enabled: true
+    total_iterations: 500 # 總執行次數
+    random_keyword_selection: true # 隨機選擇關鍵字
+    random_url_selection: true # 隨機選擇目標網址
+    min_delay_between_iterations: 5 # 每次執行間最小延遲（秒）
+    max_delay_between_iterations: 15 # 每次執行間最大延遲（秒）
+
 # 搜尋關鍵字設定
 keywords:
   # 單一關鍵字列表
