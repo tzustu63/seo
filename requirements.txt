@@ -1,0 +1,17 @@
+# Google Search Automation Requirements
+
+# Core dependencies
+selenium>=4.15.0
+PyYAML>=6.0.1
+
+# Optional dependencies for enhanced functionality
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+
+# Development dependencies (optional)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
