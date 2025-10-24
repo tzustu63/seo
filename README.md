@@ -1,4 +1,4 @@
-# Google Search Automation
+# Google Search Automation（衝流量用的）
 
 一個模組化的 Google 搜尋自動化系統，專為 SEO 優化設計，支援自動搜尋關鍵字並點擊目標網址。
 
